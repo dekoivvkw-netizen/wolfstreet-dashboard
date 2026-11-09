@@ -1,1 +1,631 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WOLFSTREET AI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0e1117;
+  color: #e8e8e8;
+  min-height: 100vh;
+  padding-bottom: 70px;
+}
+.header {
+  background: #161b22;
+  padding: 14px 16px;
+  border-bottom: 2px solid #c9a227;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { font-size: 20px; font-weight: 700; color: #c9a227; }
+.banner {
+  background: #1a1508;
+  color: #c9a227;
+  text-align: center;
+  padding: 8px;
+  font-size: 12px;
+  border-bottom: 1px solid #2d3142;
+}
+.nav-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #161b22;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  border-top: 1px solid #2d3142;
+  z-index: 100;
+}
+.nav-bottom button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.nav-bottom button.active { color: #c9a227; }
+.nav-bottom .icon { font-size: 20px; }
+.container { padding: 12px 16px 20px; max-width: 900px; margin: 0 auto; }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.kpi {
+  background: #1e2130;
+  border: 1px solid #2d3142;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.kpi .value { font-size: 22px; font-weight: 700; color: #c9a227; }
+.kpi .label { font-size: 11px; color: #888; margin-top: 2px; }
+.section { display: none; }
+.section.active { display: block; }
+.card {
+  background: #1e2130;
+  border: 1px solid #2d3142;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+h2 { color: #c9a227; margin-bottom: 10px; font-size: 16px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+th, td {
+  padding: 8px 4px;
+  text-align: left;
+  border-bottom: 1px solid #2d3142;
+  vertical-align: top;
+}
+th { color: #c9a227; font-weight: 600; cursor: pointer; }
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge-alta { background: #7f1d1d; color: #fca5a5; }
+.badge-media { background: #78350f; color: #fcd34d; }
+.badge-info { background: #14532d; color: #86efac; }
+.badge-ok { background: #14532d; color: #86efac; }
+.badge-no { background: #7f1d1d; color: #fca5a5; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+select, input, textarea, button.primary, button.secondary {
+  background: #161b22;
+  border: 1px solid #2d3142;
+  color: #e8e8e8;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+button.primary {
+  background: #c9a227;
+  color: #0e1117;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+}
+button.secondary {
+  background: #2d3142;
+  margin-top: 6px;
+}
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  text-align: center;
+}
+.login-screen input { max-width: 280px; margin: 12px 0; }
+.hidden { display: none !important; }
+.note-input { font-size: 12px; padding: 6px; margin-top: 4px; }
+.small-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  margin: 2px;
+  width: auto;
+  display: inline-block;
+}
+.chart-box { height: 220px; margin: 8px 0; }
+.footer {
+  text-align: center;
+  padding: 16px;
+  color: #555;
+  font-size: 11px;
+}
+@media (min-width: 700px) {
+  .kpis { grid-template-columns: repeat(4, 1fr); }
+  .nav-bottom { display: none; }
+  .top-nav { display: flex !important; }
+}
+.top-nav { display: none; gap: 6px; padding: 10px 16px; background: #161b22; overflow-x: auto; }
+.top-nav button { background: transparent; border: 1px solid #2d3142; color: #ccc; padding: 6px 12px; border-radius: 16px; font-size: 13px; }
+.top-nav button.active { background: #c9a227; color: #0e1117; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-screen">
+  <div class="logo" style="font-size:28px;margin-bottom:8px;">🐺 WOLFSTREET AI</div>
+  <p style="color:#888;margin-bottom:20px;">Dashboard operativa</p>
+  <input type="password" id="loginPass" placeholder="Password" autofocus>
+  <button class="primary" onclick="doLogin()" style="max-width:280px;">Entra</button>
+  <p style="font-size:12px;color:#666;margin-top:20px;">Password iniziale: wolfstreet</p>
+</div>
+
+<div id="app" class="hidden">
+  <div class="header">
+    <div class="logo">🐺 WOLFSTREET AI</div>
+    <div>
+      <button class="secondary small-btn" onclick="toggleSafeMode()" id="safeBtn">Modalità sicura</button>
+      <button class="secondary small-btn" onclick="logout()">Esci</button>
+    </div>
+  </div>
+  <div class="banner" id="banner">Dashboard locale · Non inserire dati sensibili o credenziali · I dati restano solo sul tuo dispositivo</div>
+
+  <div class="top-nav" id="topNav">
+    <button class="active" data-page="home">Dashboard</button>
+    <button data-page="deals">Deal Finder</button>
+    <button data-page="listings">Listings</button>
+    <button data-page="clients">Clienti</button>
+    <button data-page="alerts">Alert</button>
+    <button data-page="reports">Report</button>
+    <button data-page="settings">Impostazioni</button>
+  </div>
+
+  <div class="container">
+    <div id="home" class="section active">
+      <div class="kpis" id="kpis"></div>
+      <div class="card">
+        <h2>Deal migliori</h2>
+        <div id="top-deals"></div>
+      </div>
+    </div>
+
+    <div id="deals" class="section">
+      <div class="filters">
+        <input type="text" id="searchDeals" placeholder="Cerca prodotto..." oninput="renderDeals()">
+        <select id="filterPlatform" onchange="renderDeals()">
+          <option value="">Tutte piattaforme</option>
+          <option>Vinted</option><option>Subito</option><option>Facebook Marketplace</option><option>eBay</option><option>Wallapop</option>
+        </select>
+        <select id="filterStatus" onchange="renderDeals()">
+          <option value="">Tutti stati</option>
+          <option>Nuovo</option><option>In analisi</option><option>Approvato</option><option>Scartato</option>
+        </select>
+      </div>
+      <div class="card">
+        <h2>Deal trovati <button class="secondary small-btn" onclick="simulateRefresh()">Aggiorna</button></h2>
+        <div id="deals-table"></div>
+      </div>
+    </div>
+
+    <div id="listings" class="section">
+      <div class="card">
+        <h2>Listings</h2>
+        <div id="listings-table"></div>
+      </div>
+      <div class="card" id="newListingCard">
+        <h2>Nuovo listing</h2>
+        <input type="text" id="newTitle" placeholder="Titolo">
+        <input type="number" id="newPrice" placeholder="Prezzo €">
+        <select id="newPlatform"><option>Vinted</option><option>Shopify</option></select>
+        <button class="primary" onclick="addListing()">Crea</button>
+      </div>
+    </div>
+
+    <div id="clients" class="section">
+      <div class="card">
+        <h2>Clienti</h2>
+        <div id="clients-list"></div>
+      </div>
+      <div class="card">
+        <h2>Nuovo cliente</h2>
+        <input type="text" id="newClientName" placeholder="Nome cliente">
+        <input type="text" id="newClientNote" placeholder="Nota">
+        <button class="primary" onclick="addClient()">Aggiungi</button>
+      </div>
+    </div>
+
+    <div id="alerts" class="section">
+      <div class="card" id="alerts-list"></div>
+    </div>
+
+    <div id="reports" class="section">
+      <div class="card">
+        <h2>Deal per piattaforma</h2>
+        <div class="chart-box"><canvas id="chartPlatform"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Margine medio per categoria</h2>
+        <div class="chart-box"><canvas id="chartMargin"></canvas></div>
+      </div>
+      <button class="primary" onclick="exportData()">Scarica backup JSON</button>
+    </div>
+
+    <div id="settings" class="section">
+      <div class="card">
+        <h2>Sicurezza</h2>
+        <p>Password attuale: wolfstreet (puoi cambiarla qui sotto)</p>
+        <input type="password" id="newPass" placeholder="Nuova password">
+        <button class="primary" onclick="changePassword()">Cambia password</button>
+      </div>
+      <div class="card">
+        <h2>Sistema</h2>
+        <p>Dati salvati localmente sul dispositivo</p>
+        <p>Ultimo salvataggio: <span id="lastSave">-</span></p>
+        <button class="primary" onclick="exportData()">Backup completo</button>
+        <button class="secondary" onclick="resetData()">Ripristina dati di esempio</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom" id="bottomNav">
+    <button class="active" data-page="home"><span class="icon">🏠</span>Home</button>
+    <button data-page="deals"><span class="icon">🔍</span>Deal</button>
+    <button data-page="listings"><span class="icon">📋</span>List</button>
+    <button data-page="clients"><span class="icon">👥</span>Clienti</button>
+    <button data-page="alerts"><span class="icon">🔔</span>Alert</button>
+    <button data-page="reports"><span class="icon">📊</span>Report</button>
+    <button data-page="settings"><span class="icon">⚙️</span>Imp</button>
+  </div>
+</div>
+
+<div class="footer">WOLFSTREET AI · Automazione totale. Risultati reali. · Dati locali e sicuri</div>
+
+<script>
+const DEFAULT_PASS = "wolfstreet";
+let safeMode = false;
+let deals = [];
+let listings = [];
+let clients = [];
+let alerts = [];
+let charts = {};
+
+function loadData() {
+  const saved = localStorage.getItem("wolfstreet_data");
+  if (saved) {
+    const data = JSON.parse(saved);
+    deals = data.deals || getDefaultDeals();
+    listings = data.listings || getDefaultListings();
+    clients = data.clients || getDefaultClients();
+    alerts = data.alerts || getDefaultAlerts();
+  } else {
+    resetToDefaults();
+  }
+  updateLastSave();
+}
+
+function saveData() {
+  const data = { deals, listings, clients, alerts, savedAt: new Date().toISOString() };
+  localStorage.setItem("wolfstreet_data", JSON.stringify(data));
+  updateLastSave();
+}
+
+function updateLastSave() {
+  const el = document.getElementById("lastSave");
+  if (el) el.textContent = new Date().toLocaleString("it-IT");
+}
+
+function getDefaultDeals() {
+  return [
+    {id:"DEAL-1023", titolo:"Samsung Z Fold7 usato", piattaforma:"Vinted", categoria:"Elettronica", prezzo:420, mercato:580, margine:38.1, score:94.2, stato:"Approvato", nota:""},
+    {id:"DEAL-1018", titolo:"Marshall Woburn III", piattaforma:"Subito", categoria:"Elettronica", prezzo:210, mercato:320, margine:52.4, score:91.5, stato:"Nuovo", nota:""},
+    {id:"DEAL-1041", titolo:"Nike Air Max 90", piattaforma:"Vinted", categoria:"Moda", prezzo:45, mercato:95, margine:111.1, score:88.7, stato:"In analisi", nota:""},
+    {id:"DEAL-1007", titolo:"IKEA Kallax bianco", piattaforma:"Facebook Marketplace", categoria:"Casa", prezzo:35, mercato:70, margine:100, score:85.3, stato:"Approvato", nota:""},
+    {id:"DEAL-1033", titolo:"Apple AirPods Pro 2", piattaforma:"Wallapop", categoria:"Elettronica", prezzo:145, mercato:220, margine:51.7, score:82.1, stato:"Nuovo", nota:""},
+    {id:"DEAL-1029", titolo:"Adidas Ultraboost", piattaforma:"Vinted", categoria:"Sport", prezzo:55, mercato:110, margine:100, score:79.4, stato:"In analisi", nota:""}
+  ];
+}
+function getDefaultListings() {
+  return [
+    {id:"LIST-201", prodotto:"Samsung Z Fold7", piattaforma:"Shopify", prezzo:550, stato:"Attivo", views:128},
+    {id:"LIST-202", prodotto:"Marshall Woburn", piattaforma:"Vinted", prezzo:280, stato:"Attivo", views:64},
+    {id:"LIST-203", prodotto:"Nike Dunk Low", piattaforma:"Vinted", prezzo:75, stato:"Venduto", views:210}
+  ];
+}
+function getDefaultClients() {
+  return [
+    {nome:"Mario Rossi", nota:"Reseller Vinted attivo", attivo:true},
+    {nome:"Negozio Moda Milano", nota:"Shopify + Vinted", attivo:true}
+  ];
+}
+function getDefaultAlerts() {
+  return [
+    {tipo:"Deal Alto Margine", msg:"DEAL-1041 margine 111% – richiede approvazione", priorita:"Alta", tempo:"12 min fa", gestito:false},
+    {tipo:"Listing Inattivo", msg:"LIST-204 senza views da 5 giorni", priorita:"Media", tempo:"2 ore fa", gestito:false}
+  ];
+}
+
+function resetToDefaults() {
+  deals = getDefaultDeals();
+  listings = getDefaultListings();
+  clients = getDefaultClients();
+  alerts = getDefaultAlerts();
+  saveData();
+}
+
+function doLogin() {
+  const pass = document.getElementById("loginPass").value;
+  const savedPass = localStorage.getItem("wolfstreet_pass") || DEFAULT_PASS;
+  if (pass === savedPass) {
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    loadData();
+    renderAll();
+  } else {
+    alert("Password errata");
+  }
+}
+
+function logout() {
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("loginPass").value = "";
+}
+
+function changePassword() {
+  const np = document.getElementById("newPass").value;
+  if (np.length < 4) return alert("Minimo 4 caratteri");
+  localStorage.setItem("wolfstreet_pass", np);
+  alert("Password aggiornata");
+  document.getElementById("newPass").value = "";
+}
+
+function toggleSafeMode() {
+  safeMode = !safeMode;
+  document.getElementById("safeBtn").textContent = safeMode ? "Modalità sicura ON" : "Modalità sicura";
+  document.getElementById("newListingCard").style.display = safeMode ? "none" : "block";
+  renderDeals();
+}
+
+function renderKpis() {
+  const approvati = deals.filter(d => d.stato === "Approvato").length;
+  const margineMedio = deals.length ? (deals.reduce((s,d)=>s+d.margine,0)/deals.length).toFixed(1) : 0;
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="value">${deals.length}</div><div class="label">Deal totali</div></div>
+    <div class="kpi"><div class="value">${margineMedio}%</div><div class="label">Margine medio</div></div>
+    <div class="kpi"><div class="value">${listings.filter(l=>l.stato==="Attivo").length}</div><div class="label">Listing attivi</div></div>
+    <div class="kpi"><div class="value">${alerts.filter(a=>!a.gestito).length}</div><div class="label">Alert aperti</div></div>
+  `;
+}
+
+function renderTopDeals() {
+  const top = [...deals].sort((a,b)=>b.score-a.score).slice(0,5);
+  let html = `<table><tr><th>Prodotto</th><th>Margine</th><th>Score</th><th>Stato</th></tr>`;
+  top.forEach(d => {
+    html += `<tr><td>${d.titolo}</td><td>${d.margine}%</td><td>${d.score}</td><td>${d.stato}</td></tr>`;
+  });
+  document.getElementById("top-deals").innerHTML = html + "</table>";
+}
+
+function renderDeals() {
+  const q = (document.getElementById("searchDeals")?.value || "").toLowerCase();
+  const plat = document.getElementById("filterPlatform")?.value || "";
+  const st = document.getElementById("filterStatus")?.value || "";
+  let filtered = deals.filter(d => 
+    (!q || d.titolo.toLowerCase().includes(q)) &&
+    (!plat || d.piattaforma === plat) &&
+    (!st || d.stato === st)
+  );
+  let html = `<table><tr>
+    <th onclick="sortDeals('titolo')">Prodotto</th>
+    <th onclick="sortDeals('margine')">Margine</th>
+    <th onclick="sortDeals('score')">Score</th>
+    <th>Stato</th>
+    <th>Azioni</th>
+  </tr>`;
+  filtered.forEach((d, i) => {
+    const realIdx = deals.indexOf(d);
+    html += `<tr>
+      <td>${d.titolo}<br><small style="color:#888">${d.piattaforma} · €${d.prezzo}</small>
+        ${d.nota ? `<div style="color:#c9a227;font-size:11px;margin-top:2px;">📝 ${d.nota}</div>` : ""}
+      </td>
+      <td>${d.margine}%</td>
+      <td>${d.score}</td>
+      <td><span class="badge ${d.stato==='Approvato'?'badge-ok':d.stato==='Scartato'?'badge-no':'badge-media'}">${d.stato}</span></td>
+      <td>
+        ${!safeMode ? `
+          <button class="secondary small-btn" onclick="setStatus(${realIdx},'Approvato')">✓</button>
+          <button class="secondary small-btn" onclick="setStatus(${realIdx},'Scartato')">✗</button>
+          <input class="note-input" placeholder="Nota" value="${d.nota||''}" onchange="setNote(${realIdx}, this.value)">
+        ` : ""}
+      </td>
+    </tr>`;
+  });
+  document.getElementById("deals-table").innerHTML = html + "</table>";
+}
+
+function sortDeals(key) {
+  deals.sort((a,b) => (b[key] > a[key] ? 1 : -1));
+  saveData();
+  renderDeals();
+}
+
+function setStatus(idx, stato) {
+  deals[idx].stato = stato;
+  saveData();
+  renderDeals();
+  renderKpis();
+}
+
+function setNote(idx, nota) {
+  deals[idx].nota = nota;
+  saveData();
+}
+
+function renderListings() {
+  let html = `<table><tr><th>Prodotto</th><th>Piattaforma</th><th>Prezzo</th><th>Stato</th><th>Views</th></tr>`;
+  listings.forEach(l => {
+    html += `<tr><td>${l.prodotto}</td><td>${l.piattaforma}</td><td>€${l.prezzo}</td><td>${l.stato}</td><td>${l.views}</td></tr>`;
+  });
+  document.getElementById("listings-table").innerHTML = html + "</table>";
+}
+
+function addListing() {
+  if (safeMode) return;
+  const title = document.getElementById("newTitle").value.trim();
+  const price = document.getElementById("newPrice").value;
+  if (!title || !price) return alert("Inserisci titolo e prezzo");
+  listings.unshift({
+    id: "LIST-" + Date.now().toString().slice(-4),
+    prodotto: title,
+    piattaforma: document.getElementById("newPlatform").value,
+    prezzo: Number(price),
+    stato: "In revisione",
+    views: 0
+  });
+  document.getElementById("newTitle").value = "";
+  document.getElementById("newPrice").value = "";
+  saveData();
+  renderListings();
+  renderKpis();
+}
+
+function renderClients() {
+  let html = "";
+  clients.forEach((c, i) => {
+    html += `<div style="padding:8px 0;border-bottom:1px solid #2d3142;">
+      <strong>${c.nome}</strong> ${c.attivo ? '<span class="badge badge-ok">Attivo</span>' : ''}
+      <div style="color:#888;font-size:12px;">${c.nota}</div>
+    </div>`;
+  });
+  document.getElementById("clients-list").innerHTML = html || "<p>Nessun cliente</p>";
+}
+
+function addClient() {
+  const nome = document.getElementById("newClientName").value.trim();
+  if (!nome) return;
+  clients.push({ nome, nota: document.getElementById("newClientNote").value, attivo: true });
+  document.getElementById("newClientName").value = "";
+  document.getElementById("newClientNote").value = "";
+  saveData();
+  renderClients();
+}
+
+function renderAlerts() {
+  let html = "";
+  alerts.forEach((a, i) => {
+    if (a.gestito) return;
+    const cls = a.priorita === "Alta" ? "badge-alta" : a.priorita === "Media" ? "badge-media" : "badge-info";
+    html += `<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #2d3142;">
+      <span class="badge ${cls}">${a.priorita}</span>
+      <strong style="margin-left:6px;">${a.tipo}</strong>
+      <span style="float:right;color:#666;font-size:11px;">${a.tempo}</span>
+      <p style="margin:6px 0;font-size:13px;">${a.msg}</p>
+      <button class="secondary small-btn" onclick="gestisciAlert(${i})">Segna gestito</button>
+    </div>`;
+  });
+  document.getElementById("alerts-list").innerHTML = html || "<p>Nessun alert aperto</p>";
+}
+
+function gestisciAlert(i) {
+  alerts[i].gestito = true;
+  saveData();
+  renderAlerts();
+  renderKpis();
+}
+
+function simulateRefresh() {
+  const btn = event.target;
+  btn.textContent = "Aggiornamento...";
+  setTimeout(() => {
+    btn.textContent = "Aggiorna";
+    renderDeals();
+    alert("Ricerca aggiornata (dati di esempio)");
+  }, 800);
+}
+
+function initCharts() {
+  if (charts.p) charts.p.destroy();
+  if (charts.m) charts.m.destroy();
+  const platCount = {};
+  deals.forEach(d => platCount[d.piattaforma] = (platCount[d.piattaforma]||0)+1);
+  charts.p = new Chart(document.getElementById("chartPlatform"), {
+    type: "doughnut",
+    data: { labels: Object.keys(platCount), datasets: [{ data: Object.values(platCount), backgroundColor: ["#c9a227","#8b7355","#5c4d3c","#3d3428","#2a241c"] }] },
+    options: { plugins: { legend: { labels: { color: "#ccc", font:{size:11} } } } }
+  });
+  const catMargin = {};
+  const catCount = {};
+  deals.forEach(d => {
+    catMargin[d.categoria] = (catMargin[d.categoria]||0) + d.margine;
+    catCount[d.categoria] = (catCount[d.categoria]||0) + 1;
+  });
+  const labels = Object.keys(catMargin);
+  const avg = labels.map(l => (catMargin[l]/catCount[l]).toFixed(1));
+  charts.m = new Chart(document.getElementById("chartMargin"), {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Margine %", data: avg, backgroundColor: "#c9a227" }] },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#ccc" } }, y: { ticks: { color: "#ccc" } } } }
+  });
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({deals, listings, clients, alerts}, null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "wolfstreet_backup_" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+}
+
+function resetData() {
+  if (confirm("Ripristinare i dati di esempio? I dati attuali verranno sovrascritti.")) {
+    resetToDefaults();
+    renderAll();
+  }
+}
+
+function renderAll() {
+  renderKpis();
+  renderTopDeals();
+  renderDeals();
+  renderListings();
+  renderClients();
+  renderAlerts();
+}
+
+function setupNav() {
+  document.querySelectorAll("[data-page]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-page]").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(`[data-page="${btn.dataset.page}"]`).forEach(b => b.classList.add("active"));
+      document.getElementById(btn.dataset.page).classList.add("active");
+      if (btn.dataset.page === "reports") setTimeout(initCharts, 50);
+    });
+  });
+}
+
+// Init
+setupNav();
+if (localStorage.getItem("wolfstreet_pass")) {
+  // already has custom pass
+}
+</script>
+</body>
+</html>
